@@ -8,8 +8,9 @@
  *   KSU parking zones or verified parking infrastructure.
  * - The 4,000 parking spaces and their occupancy data are entirely simulated.
  * - All user accounts, vehicle plates, and violations are fictional demo data.
- * - Saudi-style plate format used: ABC-1234 (3 Arabic-alphabet romanisation
- *   letters + 4 digits), purely for demo purposes.
+ * - Saudi plate format: stored as "ABJ 1234" (Latin transliteration + digits).
+ *   The Arabic glyphs are displayed in the UI beside the Latin form.
+ *   Format rules: 3 uppercase Latin letters (romanised Arabic) + space + 1–4 digits.
  */
 
 import { PrismaClient, UserRole, SpaceStatus, ViolationType, ViolationStatus } from '@prisma/client';
@@ -81,20 +82,23 @@ const SPACES_PER_ZONE = 500;
 
 // ─── Demo users (fictional) ───────────────────────────────────────────────────
 const DEMO_USERS = [
-  { email: 'student@demo.ksu',  name: 'Ahmed Al-Rashidi',   role: UserRole.STUDENT,  plate: 'ARS-4421' },
+  { email: 'student@demo.ksu',  name: 'Ahmed Al-Rashidi',   role: UserRole.STUDENT,  plate: 'ARS 4421' },
   { email: 'security@demo.ksu', name: 'Khalid Al-Zahrani',  role: UserRole.SECURITY, plate: null },
   { email: 'admin@demo.ksu',    name: 'Fatima Al-Otaibi',   role: UserRole.ADMIN,    plate: null },
 ] as const;
 
 const DEMO_PASSWORD = 'Demo@12345';
 
-// ─── Demo vehicles (fictional Saudi-style plates) ─────────────────────────────
-// Format: 3 letters + hyphen + 4 digits (romanised Saudi plate style for demo)
+// ─── Demo vehicles — Saudi dual-script plate format ────────────────────────────
+// Stored as Latin transliteration: 3 uppercase letters + space + 1–4 digits.
+// UI displays Arabic glyphs alongside, e.g. "أ ر س ٤٤٢١ / ARS 4421".
+// Transliteration key (simplified demo): A=أ B=ب D=د F=ف G=غ H=ه J=ج K=ك
+//   L=ل M=م N=ن Q=ق R=ر S=س T=ت V=ف W=و X=خ Y=ي Z=ز
 const DEMO_PLATES = [
-  'BKT-2201', 'DRZ-8873', 'FMS-4490', 'GHN-3312', 'HJK-7765',
-  'KLM-1198', 'MNP-5543', 'QRS-8821', 'TVX-3367', 'WYZ-6654',
-  'ABD-9981', 'CFG-2234', 'EHI-5567', 'JLO-8890', 'NPR-1123',
-  'STU-4456', 'VWX-7789', 'YZA-0012', 'BCF-3345', 'DGJ-6678',
+  'BKT 2201', 'DRZ 8873', 'FMS 4490', 'GHN 3312', 'HJK 7765',
+  'KLM 1198', 'MNP 5543', 'QRS 8821', 'TVX 3367', 'WYZ 6654',
+  'ABD 9981', 'CFG 2234', 'EHI 5567', 'JLO 8890', 'NPR 1123',
+  'STU 4456', 'VWX 7789', 'YZA 0012', 'BCF 3345', 'DGJ 6678',
 ];
 
 const VEHICLE_MAKES = ['Toyota', 'Hyundai', 'Kia', 'Ford', 'Chevrolet', 'Nissan', 'Honda', 'BMW', 'Mercedes-Benz', 'Lexus'];

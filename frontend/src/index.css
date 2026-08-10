@@ -9,11 +9,12 @@
 
 @layer components {
   .btn        { @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
-  .btn-primary   { @apply btn bg-green-700 text-white hover:bg-green-800; }
+  .btn-primary   { @apply btn bg-ksu-blue text-white hover:bg-ksu-blueDark; }
   .btn-secondary { @apply btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50; }
   .btn-danger    { @apply btn bg-red-600 text-white hover:bg-red-700; }
-  .input      { @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-600; }
+  .input      { @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ksu-blue; }
   .card       { @apply bg-white rounded-xl border border-gray-200 p-4; }
+  /* Availability badges — semantic status colors, intentionally not brand blue */
   .badge-green  { @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800; }
   .badge-yellow { @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800; }
   .badge-red    { @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800; }

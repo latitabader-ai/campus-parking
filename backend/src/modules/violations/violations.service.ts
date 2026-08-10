@@ -50,14 +50,14 @@ export async function createViolation(
   input: CreateViolationInput,
   reportedById: string | null,       // null = system-generated
 ) {
-  // Confirm space exists
+  // Confirm space exists — spaceId is already validated as UUID by Zod schema
   const space = await prisma.space.findUnique({
     where:  { id: input.spaceId },
     select: { id: true, zoneId: true },
   });
   if (!space) {
-    const e = new Error('Space not found') as Error & { status: number };
-    e.status = 404; throw e;
+    const e = new Error(`Space not found: no space exists with id "${input.spaceId}". Select a valid space from the zone dropdown.`) as Error & { status: number };
+    e.status = 400; throw e;
   }
 
   return prisma.violation.create({

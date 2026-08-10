@@ -65,10 +65,10 @@ export default function StudentPage() {
       <section>
         <h2 className="text-base font-semibold text-gray-800 mb-3">Your Active Reservation</h2>
         {activeLoading ? <Spinner size="sm" /> : active ? (
-          <div className="card border-green-200 bg-green-50 flex items-start justify-between gap-4">
+          <div className="card border-ksu-blue/30 bg-ksu-blueTint flex items-start justify-between gap-4">
             <div className="space-y-0.5">
-              <p className="font-semibold text-green-800">{active.space.zone.name} — Space {active.space.spaceNumber}</p>
-              <p className="text-sm text-green-700">Zone <strong>{active.space.zone.code}</strong></p>
+              <p className="font-semibold text-ksu-blueDark">{active.space.zone.name} — Space {active.space.spaceNumber}</p>
+              <p className="text-sm text-ksu-blue">Zone <strong>{active.space.zone.code}</strong></p>
               <p className="text-xs text-gray-500">Expires in <strong>{timeLeft(active.expiresAt)}</strong></p>
             </div>
             <button
@@ -101,7 +101,7 @@ export default function StudentPage() {
                 return (
                   <div
                     key={zone.id}
-                    className={`card cursor-pointer border-2 transition-all ${isSelected ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}
+                    className={`card cursor-pointer border-2 transition-all ${isSelected ? 'border-ksu-blue bg-ksu-blueTint' : 'border-gray-200 hover:border-gray-300'}`}
                     onClick={() => setSelectedZoneId(isSelected ? null : zone.id)}
                   >
                     <div className="flex items-start justify-between">

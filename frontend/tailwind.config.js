@@ -7,10 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        // KSU brand green
-        'ksu-green': '#006633',
-        'ksu-green-light': '#008844',
-        // Availability palette
+        // KSU brand blue
+        ksu: {
+          blue:     '#0089C4',
+          blueDark: '#006E9E',
+          blueTint: '#E6F4FA',
+        },
+        // Availability palette — semantic status colors, do not use for brand chrome
         'avail-green':  '#22c55e',
         'avail-yellow': '#f59e0b',
         'avail-red':    '#ef4444',

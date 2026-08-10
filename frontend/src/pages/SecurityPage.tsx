@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { violationsApi, vehiclesApi } from '@/api/violations';
 import { zonesApi } from '@/api/zones';
 import { analyticsApi } from '@/api/analytics';
+import { isValidPlate } from '@/utils/plateValidator';
+import SimulatedDataBanner from '@/components/SimulatedDataBanner';
 import Spinner from '@/components/Spinner';
 import ErrorMessage from '@/components/ErrorMessage';
 
@@ -14,13 +16,14 @@ function ViolationBadge({ status }: { status: string }) {
 
 export default function SecurityPage() {
   const qc = useQueryClient();
-  const [plate, setPlate]         = useState('');
-  const [lookupResult, setLookup] = useState<{ id: string; plate: string; make: string | null; model: string | null; color: string | null; owner: { id: string; email: string; name: string; role: string } | null } | null | 'not_found'>(null);
-  const [lookupErr, setLookupErr] = useState('');
-  const [showNew, setShowNew]     = useState(false);
-  const [newForm, setNewForm]     = useState({ spaceId: '', vehiclePlate: '', violationType: 'NO_PERMIT', notes: '' });
-  const [newErr, setNewErr]       = useState('');
-  const [statusFilter, setFilter] = useState('');
+  const [plate, setPlate]           = useState('');
+  const [lookupResult, setLookup]   = useState<{ id: string; plate: string; make: string | null; model: string | null; color: string | null; owner: { id: string; email: string; name: string; role: string } | null } | null | 'not_found'>(null);
+  const [lookupErr, setLookupErr]   = useState('');
+  const [showNew, setShowNew]       = useState(false);
+  const [selectedZoneId, setSelectedZoneId] = useState('');
+  const [newForm, setNewForm]       = useState({ spaceId: '', vehiclePlate: '', violationType: 'NO_PERMIT', notes: '' });
+  const [newErr, setNewErr]         = useState('');
+  const [statusFilter, setFilter]   = useState('');
 
   const { data: summary } = useQuery({
     queryKey: ['analytics-summary'],
@@ -76,8 +79,20 @@ export default function SecurityPage() {
     queryFn:  () => zonesApi.getAll().then(r => r.data.data),
   });
 
+  // Spaces for the selected zone — only OCCUPIED + AVAILABLE
+  const { data: zoneSpaces, isFetching: spacesFetching } = useQuery({
+    queryKey: ['zone-spaces', selectedZoneId],
+    queryFn:  () => zonesApi.getZoneSpaces(selectedZoneId).then(r =>
+      r.data.data.filter(s => s.status === 'OCCUPIED' || s.status === 'AVAILABLE')
+    ),
+    enabled: !!selectedZoneId,
+  });
+
+  const canLog = !!newForm.spaceId && newForm.vehiclePlate.trim().length > 0 && !createMutation.isPending;
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <SimulatedDataBanner />
       {/* Summary cards */}
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -88,7 +103,7 @@ export default function SecurityPage() {
             { label: 'Active Reservations', value: summary.activeReservations },
           ].map(c => (
             <div key={c.label} className="card text-center">
-              <p className="text-2xl font-bold text-green-700">{c.value}</p>
+              <p className="text-2xl font-bold text-ksu-blue">{c.value}</p>
               <p className="text-xs text-gray-500 mt-0.5">{c.label}</p>
             </div>
           ))}
@@ -99,11 +114,14 @@ export default function SecurityPage() {
       <section className="card">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">Vehicle Plate Lookup</h2>
         <div className="flex gap-2">
-          <input className="input max-w-xs" placeholder="e.g. BKT-2201" value={plate}
+          <input className="input max-w-xs" placeholder="e.g. ABJ 1234 or أ ب ج 1234" value={plate}
             onChange={e => setPlate(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleLookup()} />
-          <button className="btn-secondary" onClick={handleLookup}>Lookup</button>
+          <button className="btn-secondary" onClick={handleLookup} disabled={!plate.trim()}>Lookup</button>
         </div>
+        {plate.trim() && !isValidPlate(plate) && (
+          <p className="text-xs text-amber-700 mt-1">Enter a Saudi plate — Latin (ABJ 1234) or Arabic (أ ب ج 1234)</p>
+        )}
         {lookupErr && <p className="text-sm text-red-600 mt-2">{lookupErr}</p>}
         {lookupResult === 'not_found' && <p className="text-sm text-gray-500 mt-2">No vehicle found with plate <strong>{plate}</strong>.</p>}
         {lookupResult && lookupResult !== 'not_found' && (
@@ -131,13 +149,13 @@ export default function SecurityPage() {
         </div>
 
         {showNew && (
-          <div className="card mb-4 border-green-200 bg-green-50 space-y-3">
+          <div className="card mb-4 border-ksu-blueTint bg-ksu-blueTint space-y-3">
             <h3 className="text-sm font-semibold text-gray-700">Log New Violation</h3>
             {newErr && <ErrorMessage msg={newErr} />}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Vehicle Plate</label>
-                <input className="input" placeholder="e.g. BKT-2201" value={newForm.vehiclePlate}
+                <input className="input" placeholder="e.g. ABJ-1234" value={newForm.vehiclePlate}
                   onChange={e => setNewForm(f => ({ ...f, vehiclePlate: e.target.value }))} />
               </div>
               <div>
@@ -149,25 +167,46 @@ export default function SecurityPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Space ID</label>
-                <select className="input" value={newForm.spaceId}
-                  onChange={e => setNewForm(f => ({ ...f, spaceId: e.target.value }))}>
-                  <option value="">Select a zone first…</option>
-                  {(zones ?? []).map(z => <option key={z.id} value={z.id}>{z.code} — {z.name} (use zone id as proxy)</option>)}
+                <label className="block text-xs font-medium text-gray-600 mb-1">Zone</label>
+                <select className="input" value={selectedZoneId}
+                  onChange={e => {
+                    setSelectedZoneId(e.target.value);
+                    setNewForm(f => ({ ...f, spaceId: '' }));
+                  }}>
+                  <option value="">Select zone…</option>
+                  {(zones ?? []).map(z => (
+                    <option key={z.id} value={z.id}>{z.code} — {z.name}</option>
+                  ))}
                 </select>
-                <p className="text-xs text-gray-400 mt-0.5">In MVP: paste a space UUID from the API or use zone ID as reference.</p>
               </div>
               <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Space</label>
+                <select className="input" value={newForm.spaceId}
+                  onChange={e => setNewForm(f => ({ ...f, spaceId: e.target.value }))}
+                  disabled={!selectedZoneId || spacesFetching}>
+                  <option value="">
+                    {!selectedZoneId ? 'Select a zone first…' : spacesFetching ? 'Loading…' : 'Select space…'}
+                  </option>
+                  {(zoneSpaces ?? []).map(s => (
+                    <option key={s.id} value={s.id}>{s.spaceNumber} ({s.status})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
                 <input className="input" placeholder="Optional notes" value={newForm.notes}
                   onChange={e => setNewForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
             </div>
             <div className="flex gap-2">
-              <button className="btn-primary text-xs" onClick={() => createMutation.mutate()} disabled={!newForm.spaceId || !newForm.vehiclePlate || createMutation.isPending}>
+              <button className="btn-primary text-xs" onClick={() => createMutation.mutate()} disabled={!canLog}>
                 {createMutation.isPending ? <Spinner size="sm" /> : 'Log Violation'}
               </button>
-              <button className="btn-secondary text-xs" onClick={() => setShowNew(false)}>Cancel</button>
+              <button className="btn-secondary text-xs" onClick={() => {
+                setShowNew(false);
+                setSelectedZoneId('');
+                setNewForm({ spaceId: '', vehiclePlate: '', violationType: 'NO_PERMIT', notes: '' });
+              }}>Cancel</button>
             </div>
           </div>
         )}

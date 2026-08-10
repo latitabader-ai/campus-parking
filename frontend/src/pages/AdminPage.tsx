@@ -28,7 +28,7 @@ export default function AdminPage() {
             { label: 'Registered Users',   value: summary.registeredUsers      },
           ].map(c => (
             <div key={c.label} className="card text-center">
-              <p className="text-2xl font-bold text-green-700">{c.value}</p>
+              <p className="text-2xl font-bold text-ksu-blue">{c.value}</p>
               <p className="text-xs text-gray-500 mt-0.5">{c.label}</p>
             </div>
           ))}
@@ -41,7 +41,7 @@ export default function AdminPage() {
           <li>Zone/space management: <code>/api/v1/zones</code></li>
           <li>User management: <code>/api/v1/auth</code></li>
           <li>Analytics: <code>/api/v1/analytics</code></li>
-          <li>CSV export: <a href="/api/v1/analytics/export/violations" target="_blank" rel="noreferrer" className="text-green-700 hover:underline">Download violations CSV</a></li>
+          <li>CSV export: <a href="/api/v1/analytics/export/violations" target="_blank" rel="noreferrer" className="text-ksu-blue hover:underline">Download violations CSV</a></li>
         </ul>
         <p className="text-xs text-amber-700 bg-amber-50 rounded p-2 mt-2">
           Full zone editing and user management is available via the REST API. A complete admin UI is planned for V1.

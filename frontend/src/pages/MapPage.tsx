@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import { zonesApi } from '@/api/zones';
 import { useAuthStore } from '@/store/authStore';
 import { getZoneColor, occupancyPct } from '@/utils/zoneColor';
+import { MAP_CENTER, MAP_ZOOM, MAX_BOUNDS, TILE_URL, TILE_ATTRIBUTION } from '@/utils/mapConfig';
 import SimulatedDataBanner from '@/components/SimulatedDataBanner';
 import Spinner from '@/components/Spinner';
 import type { Zone } from '@/types';
@@ -16,9 +17,6 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon   from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
-
-const KSU_CENTER: L.LatLngTuple = [24.7246, 46.6183];
-const ZOOM = 15;
 
 function toLatLng(coords: number[][]): L.LatLngTuple[] {
   return coords.map(([lng, lat]) => [lat, lng]);
@@ -40,11 +38,8 @@ export default function MapPage() {
   // Init map once
   useEffect(() => {
     if (!mapElRef.current || mapRef.current) return;
-    const map = L.map(mapElRef.current, { center: KSU_CENTER, zoom: ZOOM });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map);
+    const map = L.map(mapElRef.current, { center: MAP_CENTER, zoom: MAP_ZOOM, maxBounds: MAX_BOUNDS });
+    L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(map);
     mapRef.current  = map;
     layerRef.current = L.layerGroup().addTo(map);
     return () => { map.remove(); mapRef.current = null; };
