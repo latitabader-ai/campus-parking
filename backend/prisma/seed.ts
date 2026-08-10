@@ -68,17 +68,23 @@ function makePolygon(lat: number, lng: number) {
 // Boundaries are approximate rectangles for MVP visualisation only.
 // Zone names describe general campus area associations, not official designations.
 const ZONES = [
-  { code: 'Z1', name: 'Central Zone',  description: 'Central campus area near the main library',           lat: 24.7246, lng: 46.6183, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z2', name: 'North Zone',    description: 'Northern campus area near student facilities',        lat: 24.7298, lng: 46.6170, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z3', name: 'East Zone',     description: 'Eastern campus area near engineering colleges',       lat: 24.7255, lng: 46.6230, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z4', name: 'West Zone',     description: 'Western campus area near health sciences colleges',   lat: 24.7240, lng: 46.6140, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z5', name: 'South Zone',    description: 'Southern campus area near the main entrance',        lat: 24.7195, lng: 46.6180, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z6', name: 'Staff Zone',    description: 'Administrative area — staff and faculty designated',  lat: 24.7260, lng: 46.6200, roles: [UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z7', name: 'Visitor Zone',  description: 'Visitor and guest parking near the main gate',       lat: 24.7235, lng: 46.6155, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z8', name: 'Sports Zone',   description: 'Sports complex and outdoor facilities area',         lat: 24.7210, lng: 46.6215, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  // ── Main (male) campus ──────────────────────────────────────────────
+  { code: 'Z1', name: 'Central Campus Lot',     description: 'Central campus area near the main library',            lat: 24.7246, lng: 46.6183, capacity: 620, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z2', name: 'North Campus Lot',       description: 'Northern campus area near student facilities',         lat: 24.7298, lng: 46.6170, capacity: 540, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z3', name: 'Engineering Lot',        description: 'Eastern campus area serving the engineering colleges', lat: 24.7255, lng: 46.6230, capacity: 480, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z4', name: 'Health Sciences Lot',    description: 'Western campus area near the health sciences colleges',lat: 24.7240, lng: 46.6140, capacity: 430, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z5', name: 'Main Gate Visitor Lot',  description: 'Visitor and guest parking near the southern main gate', lat: 24.7205, lng: 46.6168, capacity: 310, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  // ── Sports complex ──────────────────────────────────────────────────
+  { code: 'Z6', name: 'Sports Complex Lot',     description: 'Stadium and outdoor sports facilities area',           lat: 24.7288, lng: 46.6205, capacity: 380, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  // ── Female campus (جامعة الملك سعود - بنات) ─────────────────────────
+  { code: 'Z7', name: 'Female Campus North',    description: 'Northern lot serving the female campus colleges',      lat: 24.7268, lng: 46.6318, capacity: 560, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z8', name: 'Female Campus South',    description: 'Southern lot serving the female campus main entrance', lat: 24.7232, lng: 46.6302, capacity: 420, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  // ── Faculty housing (إسكان أعضاء هيئة التدريس) ──────────────────────
+  { code: 'Z9', name: 'Faculty Housing Lot',    description: 'Residential parking for faculty housing residents',    lat: 24.7198, lng: 46.6262, capacity: 260, roles: [UserRole.SECURITY, UserRole.ADMIN] },
 ] as const;
 
-const SPACES_PER_ZONE = 500;
+const TOTAL_CAPACITY = ZONES.reduce((s, z) => s + z.capacity, 0);
+
 
 // ─── Demo users (fictional) ───────────────────────────────────────────────────
 const DEMO_USERS = [
@@ -167,7 +173,7 @@ async function main() {
   }
 
   // ── 3. Create zones ─────────────────────────────────────────────────────────
-  console.log('\n🗺️   Creating 8 KSU campus zones...');
+  console.log(`\n🗺️   Creating ${ZONES.length} KSU campus zones...`);
   const zoneIds: Record<string, string> = {};  // code → id
 
   for (const z of ZONES) {
@@ -181,13 +187,13 @@ async function main() {
         centerLng: z.lng,
         coordinates: polygon,
         permittedRoles: [...z.roles],
-        totalSpaces: SPACES_PER_ZONE,
+        totalSpaces: z.capacity,
       },
       create: {
         name: z.name,
         code: z.code,
         description: z.description,
-        totalSpaces: SPACES_PER_ZONE,
+        totalSpaces: z.capacity,
         permittedRoles: [...z.roles],
         coordinates: polygon,
         centerLat: z.lat,
@@ -199,7 +205,7 @@ async function main() {
   }
 
   // ── 4. Create spaces (500 per zone = 4,000 total) ───────────────────────────
-  console.log('\n🅿️   Creating 4,000 simulated parking spaces (500 per zone)...');
+  console.log(`\n🅿️   Creating ${TOTAL_CAPACITY} simulated parking spaces across ${ZONES.length} zones...`);
 
   // Delete dependents first (FK order), then spaces — safe for re-seeding
   const delEvidence     = await prisma.evidence.deleteMany({});
@@ -220,7 +226,7 @@ async function main() {
     const latHalf = LAT_HALF * 0.85;  // Slightly inset from boundary
     const lngHalf = LNG_HALF * 0.85;
 
-    const spacesData = Array.from({ length: SPACES_PER_ZONE }, (_, i) => {
+    const spacesData = Array.from({ length: z.capacity }, (_, i) => {
       const num = String(i + 1).padStart(3, '0');
       const status = randomSpaceStatus();
       return {
