@@ -1,0 +1,272 @@
+// This is the full Prisma schema for the KSU Campus Parking Management System.
+// Sub-Task 2 — replaces the Sub-Task 1 placeholder.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  STUDENT
+  SECURITY
+  ADMIN
+}
+
+enum SpaceStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MAINTENANCE
+}
+
+enum ViolationType {
+  UNAUTHORIZED_ZONE
+  OVERSTAY
+  NO_PERMIT
+  DOUBLE_PARK
+  OTHER
+}
+
+enum ViolationStatus {
+  PENDING
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+enum EvidenceFileType {
+  IMAGE
+  VIDEO
+  NOTE
+}
+
+enum NotificationType {
+  VIOLATION_DETECTED
+  SPACE_AVAILABLE
+  SYSTEM_ALERT
+}
+
+enum ReservationStatus {
+  ACTIVE
+  FULFILLED
+  EXPIRED
+  CANCELLED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  role         UserRole  @default(STUDENT)
+  vehiclePlate String?   @map("vehicle_plate")
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  vehicles              Vehicle[]
+  reportedViolations    Violation[]       @relation("ReportedBy")
+  resolvedViolations    Violation[]       @relation("ResolvedBy")
+  uploadedEvidence      Evidence[]
+  notifications         Notification[]
+  reservations          Reservation[]
+  auditLogs             AuditLog[]
+
+  @@index([role])
+  @@index([email])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Zone {
+  id             String    @id @default(uuid())
+  name           String
+  code           String    @unique             // Z1–Z8
+  totalSpaces    Int       @map("total_spaces")
+  description    String    @default("")
+  permittedRoles UserRole[] @map("permitted_roles")
+  // GeoJSON Polygon — approximate boundary placed on real KSU campus geography.
+  // Individual space coordinates within zones are simulated for the MVP.
+  coordinates    Json                          // GeoJSON Polygon { type, coordinates }
+  centerLat      Float     @map("center_lat")  // Zone centroid latitude
+  centerLng      Float     @map("center_lng")  // Zone centroid longitude
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  spaces               Space[]
+  occupancySnapshots   OccupancySnapshot[]
+
+  @@index([code])
+  @@index([deletedAt])
+  @@map("zones")
+}
+
+model Space {
+  id            String      @id @default(uuid())
+  zoneId        String      @map("zone_id")
+  spaceNumber   String      @map("space_number")  // e.g. "Z1-042"
+  status        SpaceStatus @default(AVAILABLE)
+  vehiclePlate  String?     @map("vehicle_plate")
+  lastUpdatedAt DateTime    @default(now()) @map("last_updated_at")
+  // Simulated lat/lng within the zone bounding box — not survey-accurate.
+  coordinates   Json?                             // { lat, lng }
+
+  // Relations
+  zone         Zone          @relation(fields: [zoneId], references: [id])
+  violations   Violation[]
+  reservations Reservation[]
+
+  @@unique([zoneId, spaceNumber])
+  @@index([zoneId])
+  @@index([status])
+  @@index([vehiclePlate])
+  @@map("spaces")
+}
+
+model Vehicle {
+  id           String   @id @default(uuid())
+  plate        String   @unique
+  ownerId      String?  @map("owner_id")
+  make         String?
+  model        String?
+  color        String?
+  isRegistered Boolean  @default(true) @map("is_registered")
+  registeredAt DateTime @default(now()) @map("registered_at")
+
+  // Relations
+  owner User? @relation(fields: [ownerId], references: [id])
+
+  @@index([ownerId])
+  @@index([plate])
+  @@map("vehicles")
+}
+
+model Violation {
+  id            String          @id @default(uuid())
+  spaceId       String          @map("space_id")
+  vehiclePlate  String          @map("vehicle_plate")
+  violationType ViolationType   @map("violation_type")
+  detectedAt    DateTime        @default(now()) @map("detected_at")
+  status        ViolationStatus @default(PENDING)
+  notes         String?
+  reportedById  String?         @map("reported_by")   // null = system-generated
+  resolvedById  String?         @map("resolved_by")
+  resolvedAt    DateTime?       @map("resolved_at")
+
+  // Relations
+  space      Space      @relation(fields: [spaceId], references: [id])
+  reportedBy User?      @relation("ReportedBy", fields: [reportedById], references: [id])
+  resolvedBy User?      @relation("ResolvedBy", fields: [resolvedById], references: [id])
+  evidence   Evidence[]
+
+  @@index([spaceId])
+  @@index([vehiclePlate])
+  @@index([status])
+  @@index([violationType])
+  @@index([detectedAt])
+  @@map("violations")
+}
+
+model Evidence {
+  id          String           @id @default(uuid())
+  violationId String           @map("violation_id")
+  fileUrl     String           @map("file_url")
+  fileType    EvidenceFileType @map("file_type")
+  uploadedById String          @map("uploaded_by")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  violation  Violation @relation(fields: [violationId], references: [id])
+  uploadedBy User      @relation(fields: [uploadedById], references: [id])
+
+  @@index([violationId])
+  @@map("evidence")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// OccupancySnapshot — written by the scheduler every N minutes.
+// Used for historical analytics: occupancy trends, peak hours, zone utilisation.
+model OccupancySnapshot {
+  id         String   @id @default(uuid())
+  zoneId     String   @map("zone_id")
+  occupied   Int
+  available  Int
+  total      Int
+  snapshotAt DateTime @default(now()) @map("snapshot_at")
+
+  // Relations
+  zone Zone @relation(fields: [zoneId], references: [id])
+
+  @@index([zoneId])
+  @@index([snapshotAt])
+  @@index([zoneId, snapshotAt])
+  @@map("occupancy_snapshots")
+}
+
+// Reservation — student reserves an available space for a 15-minute hold.
+// Status lifecycle: ACTIVE → FULFILLED (arrived) | EXPIRED (timer elapsed) | CANCELLED (user cancelled)
+model Reservation {
+  id        String            @id @default(uuid())
+  userId    String            @map("user_id")
+  spaceId   String            @map("space_id")
+  status    ReservationStatus @default(ACTIVE)
+  expiresAt DateTime          @map("expires_at")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id])
+  space Space @relation(fields: [spaceId], references: [id])
+
+  @@index([userId])
+  @@index([spaceId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("reservations")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String   @map("actor_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

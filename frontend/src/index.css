@@ -1,0 +1,21 @@
+/* src/index.css
+ * Global styles. Tailwind base + component + utility layers.
+ * Leaflet CSS is imported in ParkingMap.tsx to keep it co-located with the map.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-ksu-green: #006633;
+    --color-avail-green:  #22c55e;
+    --color-avail-yellow: #f59e0b;
+    --color-avail-red:    #ef4444;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}
