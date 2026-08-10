@@ -1,0 +1,11 @@
+# Project Architecture Rules (Non-Obvious Only)
+
+- **GeoJSON ↔ Leaflet coordinate inversion**: zone boundaries are stored as GeoJSON `[lng, lat]` arrays but Leaflet renders `[lat, lng]`. Any architecture that adds or processes zone geometry must account for this swap at the render boundary only (see `toLatLng()` in `MapPage.tsx`).
+- **Zone geometry lives in `coordinates Json`**: there is currently one `Json` column on Zone. Issue 4 proposes adding a second `geometry Json?` column via migration — both would then coexist. Do not assume a `geometry` column exists until the migration is applied.
+- **Cron scheduler owns space status**: all AVAILABLE/OCCUPIED churn is driven by `backend/src/scheduler/index.ts`. Any feature that reads "live" occupancy data is actually reading the last scheduled update, not a real sensor. Plan real-time features around Socket.IO `zone_updated` events, not polling.
+- **Reservation expiry is dual-path**: expiry runs both passively (on every `getReservationById` call) and actively (1-min cron sweep). Any architecture that changes reservation state must not break either path.
+- **Auth token is stateless**: JWTs are verified from secret only — there is no token blacklist or server-side session store. Logout is client-side only. Plan token revocation as a V2 concern.
+- **Monorepo has no shared package**: `backend/` and `frontend/` are completely separate npm workspaces. Types in `frontend/src/types/index.ts` must be manually kept in sync with Prisma schema — there is no code generation linking them.
+- **Frontend state is split across two systems**: global auth state is in Zustand (`authStore`); server/async state (zones, violations, reservations) is in React Query (`@tanstack/react-query`). Do not mix — auth stays in Zustand, API data stays in React Query.
+- **`SimulatedDataBanner` is a product constraint, not optional**: every map and availability view must display this banner. Architecture plans that add new data views must include this banner in scope.
+- **No test runner is configured**: there are no test files, no test framework dependency, and no `test` script in either `package.json`. Manual QA via TypeScript check (`npx tsc --noEmit`) and ESLint is the only automated validation currently in place.

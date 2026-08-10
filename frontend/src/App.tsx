@@ -1,54 +1,88 @@
-// src/App.tsx
-// Root component — routing shell is fully built out in Sub-Task 10.
-// For Sub-Task 1 this renders a status page confirming the stack is wired up.
+// src/App.tsx — Full routing shell with role-based protection
+import { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from '@/store/authStore';
+import { authApi } from '@/api/auth';
+import { setToken } from '@/api/client';
+import axios from 'axios';
+import NavBar      from '@/components/NavBar';
+import Spinner     from '@/components/Spinner';
+import LoginPage   from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
+import MapPage     from '@/pages/MapPage';
+import StudentPage from '@/pages/StudentPage';
+import SecurityPage from '@/pages/SecurityPage';
+import AdminPage   from '@/pages/AdminPage';
 
-import { Routes, Route } from 'react-router-dom';
-
-function PlaceholderPage() {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-[#006633]">
-          KSU Campus Parking
-        </h1>
-        <p className="text-gray-500 text-sm">
-          King Saud University — Campus Parking Management System
-        </p>
-        <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-          MVP Demo — Simulated Data
-        </span>
-      </div>
-
-      <div className="border border-gray-200 rounded-lg p-6 w-80 space-y-3 text-sm">
-        <p className="font-medium text-gray-700">Sub-Task 1 ✅ Scaffolding complete</p>
-        <ul className="space-y-1 text-gray-500">
-          <li>✓ React 18 + Vite + TypeScript</li>
-          <li>✓ Tailwind CSS configured</li>
-          <li>✓ React Query + React Router</li>
-          <li>✓ Backend Express API running</li>
-          <li>✓ PostgreSQL via Docker Compose</li>
-        </ul>
-        <p className="text-gray-400 text-xs pt-2">
-          Full UI implemented in Sub-Tasks 10–14.
-        </p>
-      </div>
-
-      <a
-        href="http://localhost:4000/health"
-        target="_blank"
-        rel="noreferrer"
-        className="text-xs text-[#006633] underline underline-offset-2"
-      >
-        → Check backend health endpoint
-      </a>
-    </div>
-  );
+function ProtectedRoute({ children, roles }: { children: JSX.Element; roles?: string[] }) {
+  const { user, isLoading } = useAuthStore();
+  if (isLoading) return <div className="flex justify-center mt-20"><Spinner /></div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  return children;
 }
 
 export default function App() {
+  const { setAuth, clearAuth, setLoading } = useAuthStore();
+  // On mount: attempt to restore session via silent refresh
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await authApi.me();
+        setAuth(data.data.user, '');
+      } catch {
+        try {
+          const base = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
+          const { data } = await axios.post(`${base}/api/v1/auth/refresh`, {}, { withCredentials: true });
+          setToken(data.data.accessToken);
+          const meRes = await authApi.me();
+          setAuth(meRes.data.data.user, data.data.accessToken);
+        } catch {
+          clearAuth();
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <Routes>
-      <Route path="*" element={<PlaceholderPage />} />
-    </Routes>
+    <div className="min-h-screen flex flex-col">
+      <NavBar />
+      <main className="flex-1">
+        <Routes>
+          {/* Public */}
+          <Route path="/login"    element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/map"      element={<><MapPage /></>} />
+
+          {/* Student */}
+          <Route path="/student" element={
+            <ProtectedRoute roles={['STUDENT']}>
+              <StudentPage />
+            </ProtectedRoute>
+          } />
+
+          {/* Security */}
+          <Route path="/security" element={
+            <ProtectedRoute roles={['SECURITY']}>
+              <SecurityPage />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin */}
+          <Route path="/admin" element={
+            <ProtectedRoute roles={['ADMIN']}>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+
+          {/* Default redirect */}
+          <Route path="/" element={<Navigate to="/map" replace />} />
+          <Route path="*" element={<Navigate to="/map" replace />} />
+        </Routes>
+      </main>
+    </div>
   );
 }

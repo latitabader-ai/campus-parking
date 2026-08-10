@@ -197,10 +197,16 @@ async function main() {
   // ── 4. Create spaces (500 per zone = 4,000 total) ───────────────────────────
   console.log('\n🅿️   Creating 4,000 simulated parking spaces (500 per zone)...');
 
-  // Delete existing spaces so re-seeding is safe
-  const deletedSpaces = await prisma.space.deleteMany({});
-  if (deletedSpaces.count > 0) {
-    console.log(`   ↳ Cleared ${deletedSpaces.count} existing spaces`);
+  // Delete dependents first (FK order), then spaces — safe for re-seeding
+  const delEvidence     = await prisma.evidence.deleteMany({});
+  const delViolations   = await prisma.violation.deleteMany({});
+  const delReservations = await prisma.reservation.deleteMany({});
+  const delSnapshots    = await prisma.occupancySnapshot.deleteMany({});
+  const deletedSpaces   = await prisma.space.deleteMany({});
+  const cleared = delEvidence.count + delViolations.count + delReservations.count
+                + delSnapshots.count + deletedSpaces.count;
+  if (cleared > 0) {
+    console.log(`   ↳ Cleared ${deletedSpaces.count} spaces + ${delViolations.count} violations + ${delEvidence.count} evidence + ${delReservations.count} reservations + ${delSnapshots.count} snapshots`);
   }
 
   let totalSpacesCreated = 0;

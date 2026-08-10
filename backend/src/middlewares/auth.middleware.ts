@@ -7,8 +7,9 @@ import { env } from '../config/env';
 import { sendError } from '../utils/response';
 
 export interface JwtPayload {
-  sub: string;   // user id
+  sub: string;    // user id
   email: string;
+  name: string;
   role: string;
   iat?: number;
   exp?: number;

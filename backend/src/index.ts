@@ -5,22 +5,22 @@ import http from 'http';
 import { createApp } from './app';
 import { env } from './config/env';
 import { prisma } from './config/database';
+import { initSocket } from './config/socket';
+import { startScheduler } from './scheduler';
 
 async function bootstrap() {
-  // Verify database connection
   await prisma.$connect();
   console.log('[DB] Connected to PostgreSQL');
 
-  const app = createApp();
+  const app    = createApp();
   const server = http.createServer(app);
 
-  // Socket.IO will be attached here in Sub-Task 7
-  // import { attachSocket } from './socket';
-  // attachSocket(server);
+  initSocket(server);
+  console.log('[Socket.IO] Attached');
 
-  // Scheduler will be started here in Sub-Task 8
-  // import { startScheduler } from './scheduler';
-  // if (env.simulator.enabled) startScheduler();
+  if (env.simulator.enabled) {
+    startScheduler();
+  }
 
   server.listen(env.port, () => {
     console.log(`[Server] KSU Campus Parking API running on port ${env.port}`);
