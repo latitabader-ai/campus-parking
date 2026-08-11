@@ -9,11 +9,11 @@
 
 King Saud University (KSU) in Riyadh, Saudi Arabia is one of the largest universities in the Arab world, with tens of thousands of daily commuters. Campus parking currently relies on physical signage and manual security patrols, leading to:
 
-- 15–20 minutes average search time for parking during peak hours
-- No real-time visibility into zone availability before arriving
+- Extended search times during peak arrival hours, with no way to know availability before setting out
+- No real-time visibility into zone availability
 - Manual, paper-based violation logging with no searchable record
 - No way for students to reserve a space in advance
-- No data for campus operations to plan capacity
+- No occupancy data for campus operations to plan capacity
 
 ---
 
@@ -25,7 +25,7 @@ A full-stack, **API-first responsive web application** that enables:
 2. **Security Staff** — Log and manage violations digitally, look up vehicle registrations, and monitor a live dashboard
 3. **Visitors** — Check zone availability on a public map without creating an account
 
-The system uses **real KSU campus geography** (OpenStreetMap) for the map base, with **8 logical MVP zones** and **4,000 simulated parking spaces** covering the campus area.
+The system uses **real KSU campus geography** (OpenStreetMap) for the map base, with **10 logical MVP zones** and **4,000 simulated parking spaces** spanning the main campus, the female campus, faculty housing, the sports complex, and the south gate.
 
 ---
 
@@ -43,7 +43,7 @@ The system uses **real KSU campus geography** (OpenStreetMap) for the map base, 
 
 ## MVP Capabilities
 
-- **Real-time parking map** — 8 logical zones on OpenStreetMap (Leaflet), colour-coded: green ≤60%, yellow 61–85%, red >85% occupied
+- **Real-time parking map** — 10 zones on OpenStreetMap (Leaflet), colour-coded: green ≤60%, yellow 61–85%, red >85% occupied. Zone centres are taken from real parking-lot coordinates, and capacity varies by lot (240–620 spaces) rather than being uniform
 - **Parking reservation** — 15-minute hold with automatic expiry and space release
 - **Vehicle management** — Registration, plate lookup (Security/Admin), Saudi-style plate validation
 - **Violation management** — Full lifecycle: PENDING → ACKNOWLEDGED → RESOLVED/DISMISSED; evidence attachment
@@ -58,7 +58,7 @@ The system uses **real KSU campus geography** (OpenStreetMap) for the map base, 
 | Release | Capability | Infrastructure |
 |---|---|---|
 | **MVP (current)** | Simulated availability, reservation, violations, analytics, responsive web | No hardware required |
-| **V1** | Arabic/RTL UI, optional real IoT sensors, responsive mobile web (PWA) | Optional parking sensors |
+| **V1** | Arabic/RTL UI, surveyed zone boundaries, optional real IoT sensors, responsive mobile web (PWA) | Optional parking sensors |
 | **V2** | Native iOS/Android app, real ANPR/OCR, KSU system integration | Cameras + sensors + institutional APIs |
 
 > **The current application is a responsive web application with an API-first backend.**
@@ -116,15 +116,22 @@ Open a PowerShell terminal in `campus-parking/` and run:
 ```
 
 Enter your PostgreSQL superuser (`postgres`) password when prompted.
-This creates `parking_user`, `campus_parking` database, and writes `campus-parking/.env`.
+This creates `parking_user`, the `campus_parking` database, and writes `campus-parking/.env`.
+
+> Prisma reads `.env` from the directory it runs in. Copy it into `backend/` as well:
+> `Copy-Item ..\.env .env`
+>
+> `prisma migrate dev` also creates a temporary shadow database, which requires the
+> `CREATEDB` privilege:
+> `ALTER USER parking_user CREATEDB;`
 
 ### 2. Apply schema and seed data
 
 ```powershell
 cd backend
 npm install
-npm run db:migrate   # Creates all 10 tables
-npm run db:seed      # Seeds 8 zones, 4,000 spaces, demo users, vehicles, violations
+npm run db:migrate   # Creates all tables
+npm run db:seed      # Seeds 10 zones, 4,000 spaces, demo users, vehicles, violations
 ```
 
 ### 3. Start the backend
@@ -144,6 +151,8 @@ npm install
 npm run dev
 # App: http://localhost:5173
 ```
+
+Run the backend and frontend in two separate terminals, and leave both open.
 
 ---
 
@@ -198,13 +207,12 @@ campus-parking/
 │       ├── components/        NavBar, SimulatedDataBanner, ZoneStatusBadge,
 │       │                      Spinner, ErrorMessage
 │       ├── store/             authStore (Zustand)
-│       └── utils/             zoneColor (occupancy thresholds)
+│       └── utils/             zoneColor, mapConfig, plateValidator
 ├── docs/product/              Product deliverables (see below)
 ├── setup-db.ps1               One-time DB setup script (Windows)
 ├── docker-compose.yml         Optional: PostgreSQL in Docker
 ├── .env.example               All environment variable keys
-├── AGENTS.md                  Developer/agent guidance
-└── campus-parking-plan.md     Full implementation plan + status
+└── AGENTS.md                  Developer/agent guidance
 ```
 
 ---
@@ -229,10 +237,10 @@ All seven required product deliverables are in [`docs/product/`](docs/product/):
 
 This MVP uses **entirely simulated data**:
 
-- Zone boundaries are approximate rectangles placed on real KSU campus coordinates (OpenStreetMap). They **do not** represent official KSU parking zones.
-- The 4,000 parking spaces and all occupancy figures are generated by a cron-based simulator.
+- Zone boundaries are approximate rectangles placed on real KSU campus coordinates (OpenStreetMap). Zone centres correspond to actual parking lots, but the boundaries themselves are **not** surveyed and do **not** represent official KSU parking zones.
+- The 4,000 parking spaces and all occupancy figures are generated by a seeded simulator and drifted by a cron job.
 - All user accounts, vehicle plates, and violations are fictional demo data.
-- Saudi-style plate format (`ABC-1234`) is used for demo purposes only; no real ANPR/OCR is implemented.
+- Saudi-style plate format (`ABJ 2201` — three permitted Latin letters plus digits, displayed alongside the Arabic form) is used for demo purposes only; no real ANPR/OCR is implemented.
 
 The **KSU campus geography** (base map tiles, campus location, coordinates) is real via OpenStreetMap.
 
@@ -244,7 +252,7 @@ The **KSU campus geography** (base map tiles, campus location, coordinates) is r
 # Backend
 npm run dev          # Dev server with hot reload
 npm run db:migrate   # Apply/update Prisma schema
-npm run db:seed      # Reset and reseed all demo data
+npm run db:seed      # Reseed all demo data
 npm run db:studio    # Open Prisma Studio (DB browser)
 npm run db:reset     # Drop + migrate + seed
 
@@ -260,4 +268,4 @@ npm run lint         # ESLint
 
 This prototype was developed with assistance from **IBM Bob** (Claude-based AI coding assistant).
 All product decisions — personas, scope, prioritisation, geographic distinctions, and ethical boundaries — were made by humans.
-See [`docs/product/reflective-memo.md`](docs/product/reflective-memo.md) for a full account of the AI-human collaboration.
+See [`docs/product/reflective-memo.md`](docs/product/reflective-memo.md) for a full account of the AI-human collaboration, including the specific cases where AI output was plausible but wrong and required human correction.

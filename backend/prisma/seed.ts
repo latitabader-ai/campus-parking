@@ -69,18 +69,19 @@ function makePolygon(lat: number, lng: number) {
 // Zone names describe general campus area associations, not official designations.
 const ZONES = [
   // ── Main (male) campus ──────────────────────────────────────────────
-  { code: 'Z1', name: 'Central Campus Lot',     description: 'Central campus area near the main library',            lat: 24.7246, lng: 46.6183, capacity: 620, occupancy: 0.88, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z2', name: 'North Campus Lot',       description: 'Northern campus area near student facilities',         lat: 24.7298, lng: 46.6170, capacity: 540, occupancy: 0.55, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z3', name: 'Engineering Lot',        description: 'Eastern campus area serving the engineering colleges', lat: 24.7255, lng: 46.6230, capacity: 480, occupancy: 0.72, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z4', name: 'Health Sciences Lot',    description: 'Western campus area near the health sciences colleges',lat: 24.7240, lng: 46.6140, capacity: 430, occupancy: 0.50, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z5', name: 'Main Gate Visitor Lot',  description: 'Visitor and guest parking near the southern main gate', lat: 24.7205, lng: 46.6168, capacity: 310, occupancy: 0.91, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z1', name: 'Central Campus Lot',     description: 'Central campus area near the main library',            lat: 24.726894, lng: 46.616648, capacity: 380, occupancy: 0.88, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z2', name: 'South Campus Lot', description: 'Southern campus area near student facilities', lat: 24.71530, lng: 46.62001, capacity: 540, occupancy: 0.55, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z3', name: 'Engineering Lot',        description: 'Eastern campus area serving the engineering colleges', lat: 24.725900, lng: 46.625850, capacity: 480, occupancy: 0.72, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z4', name: 'Health Sciences Lot',    description: 'Western campus area near the health sciences colleges',lat: 24.723094, lng: 46.613874, capacity: 430, occupancy: 0.50, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z5', name: 'Main Gate Visitor Lot',  description: 'Visitor and guest parking near the southern main gate',lat: 24.7218, lng: 46.6168, capacity: 310, occupancy: 0.91, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
   // ── Sports complex ──────────────────────────────────────────────────
   { code: 'Z6', name: 'Sports Complex Lot',     description: 'Stadium and outdoor sports facilities area',           lat: 24.7288, lng: 46.6205, capacity: 380, occupancy: 0.45, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
   // ── Female campus (جامعة الملك سعود - بنات) ─────────────────────────
-  { code: 'Z7', name: 'Female Campus North',    description: 'Northern lot serving the female campus colleges',      lat: 24.7262, lng: 46.6352, capacity: 560, occupancy: 0.78, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
-  { code: 'Z8', name: 'Female Campus South',    description: 'Southern lot serving the female campus main entrance', lat: 24.7238, lng: 46.6340, capacity: 420, occupancy: 0.52, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z7', name: 'Female Campus North',    description: 'Northern lot serving the female campus colleges',      lat: 24.732020, lng: 46.634390, capacity: 560, occupancy: 0.78, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z8', name: 'Female Campus South',    description: 'Southern lot serving the female campus main entrance', lat: 24.724690, lng: 46.641430, capacity: 420, occupancy: 0.52, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
   // ── Faculty housing (إسكان أعضاء هيئة التدريس) ──────────────────────
-  { code: 'Z9', name: 'Faculty Housing Lot',    description: 'Residential parking for faculty housing residents',    lat: 24.7185, lng: 46.6295, capacity: 260, occupancy: 0.40, roles: [UserRole.SECURITY, UserRole.ADMIN] },
+  { code: 'Z9', name: 'Faculty Housing Lot',    description: 'Residential parking for faculty housing residents',    lat: 24.720010, lng: 46.627090, capacity: 260, occupancy: 0.40, roles: [UserRole.SECURITY, UserRole.ADMIN] },
+{ code: 'Z10', name: 'South Gate Lot', description: 'Southern campus lot near the student housing entrance', lat: 24.715800, lng: 46.616360, capacity: 240, occupancy: 0.68, roles: [UserRole.STUDENT, UserRole.SECURITY, UserRole.ADMIN] },
 ] as const;
 
 const TOTAL_CAPACITY = ZONES.reduce((s, z) => s + z.capacity, 0);
