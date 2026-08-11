@@ -1,113 +1,137 @@
 # Product Roadmap
 ## KSU Intelligent Campus Parking Management System
 
-**Date:** 2025
 **Horizon:** MVP → V1 → V2
 
 ---
 
-## Roadmap Overview
+## Overview
 
 ```
-MVP (now)           V1 (next)              V2 (future)
-─────────────────   ────────────────────   ───────────────────────
-Simulated data      Real sensor option     IoT sensors deployed
-Web-only            Responsive + PWA       Native iOS / Android
-English UI          Arabic / RTL           Full localisation
-Manual violations   ANPR simulation        Real ANPR camera feed
-KSU single campus   KSU full deployment    Multi-campus
+MVP (complete)        V1 (next)                  V2 (future)
+──────────────────    ────────────────────────   ───────────────────────
+Simulated occupancy   Sensor pilot + adapter     IoT sensors deployed
+Approximate zones     Surveyed lot boundaries    Full geometry
+Responsive web        PWA + admin UI             Native iOS / Android
+English UI            Arabic / RTL               Full localisation
+Manual violations     + Repeat-offender history  Real ANPR camera feed
+No baseline data      Baseline measured          Predictive modelling
 ```
 
 ---
 
-## MVP — Current State
+## MVP — Complete
 
-**Goal:** Validate core product concept with a functional prototype. No real hardware. All parking data simulated.
+**Goal:** Validate the core product concept with a functional prototype requiring no hardware.
 
-| Feature | Status |
+| Capability | Status |
 |---|---|
-| Interactive parking map (OpenStreetMap, KSU campus) | ✅ In development |
-| Real-time zone availability with colour coding | ✅ In development |
-| Parking space reservation (15-minute hold) | ✅ In development |
-| Student account + vehicle registration | ✅ In development |
-| Security staff violation logging + evidence | ✅ In development |
-| Automated violation detection (scheduler/simulation) | ✅ In development |
-| Security dashboard (live violation queue) | ✅ In development |
-| In-app notifications (Socket.IO) | ✅ In development |
-| Email notifications (SMTP, configurable) | ✅ In development |
-| Parking analytics (occupancy trends, violations) | ✅ In development |
-| Visitor public map (no login) | ✅ In development |
-| Admin zone + user management | ✅ In development |
-| API-first architecture (REST + WebSocket) | ✅ In development |
-| **Simulated occupancy data** | ✅ Intentional — no hardware required |
+| Interactive parking map (OpenStreetMap, real KSU geography) | ✅ Complete |
+| 10 zones across both campuses, faculty housing, and sports complex | ✅ Complete |
+| Real-time zone availability with colour coding | ✅ Complete |
+| Per-lot capacity (240–620) and per-zone occupancy rates | ✅ Complete |
+| Parking space reservation with 15-minute hold | ✅ Complete |
+| Student account and vehicle registration | ✅ Complete |
+| Saudi dual-script plate format and validation | ✅ Complete |
+| Security staff violation logging with evidence | ✅ Complete |
+| Cascading Zone → Space selection for violations | ✅ Complete |
+| Automated violation detection (simulated) | ✅ Complete |
+| Security dashboard with live violation queue | ✅ Complete |
+| In-app notifications via Socket.IO | ✅ Complete |
+| Email notifications via SMTP (configurable) | ✅ Complete |
+| Occupancy and violation analytics with CSV export | ✅ Complete |
+| Public visitor map, no login required | ✅ Complete |
+| Zone and user management via REST API | ✅ Complete |
+| API-first architecture (REST + WebSocket) | ✅ Complete |
+| KSU visual identity (blue and white) | ✅ Complete |
 
-**Explicit MVP Limitations:**
-- Zone boundaries are approximate (not official KSU parking zones)
-- 4,000 spaces are simulated — not from real sensors
-- No Arabic/RTL UI
-- No native mobile app
-- No payment processing
+### Explicit MVP limitations
+
+- Zone boundaries are **approximate rectangles**, not surveyed geometry. Zone centres correspond to real lots; the extents do not.
+- All 4,000 spaces and their occupancy are **simulated**, not sensor-derived.
+- Zone and user management is available **via API only** — no dedicated admin interface.
+- **No Arabic or RTL** interface.
+- No native mobile application; no payment processing.
+- **No measured baseline** against which improvement could be demonstrated.
 
 ---
 
-## V1 — Responsive Web + Optional Real Sensors
+## V1 — Deployable at KSU
 
-**Goal:** Deployable at KSU. Responsive design optimised for mobile browsers. Optional connection to real parking sensors.
+**Goal:** A system KSU could actually run, with the accuracy and language support that requires.
 
-| Feature | Description |
-|---|---|
-| Arabic / RTL localisation | Full right-to-left UI; Arabic content |
-| Responsive mobile web | Optimised for smartphone browsers (PWA optional) |
-| Real sensor adapter | Pluggable adapter layer; replace simulator with real IoT sensor API |
-| Push notifications (browser) | Web Push API for background notifications |
-| Enhanced ANPR simulation | Camera input → simulated plate extraction (no real OCR) |
-| Violation history per vehicle | Repeat-offender tracking |
-| Configurable thresholds (admin UI) | Overstay duration, zone capacity alerts |
-| Full WCAG 2.1 AA accessibility | Colour + text labels; keyboard navigation |
-| Production hardening | Rate limiting, security headers, HTTPS enforcement |
-| Deployment to KSU infrastructure | On-premise or university cloud |
+| Item | Description | Depends on |
+|---|---|---|
+| **Baseline measurement** | Time a sample of peak-hour arrivals and a sample of paper violation reports, establishing what the system must beat | Security operations cooperation |
+| **Surveyed zone boundaries** | Replace rectangles with real lot geometry; add a `geometry` column and render true polygons | KSU facilities management data |
+| **Arabic / RTL localisation** | Full right-to-left interface with KSU terminology | String extraction + RTL CSS audit |
+| **Sensor pilot** | Deploy occupancy sensors in one high-pressure lot to validate the simulator replacement path | Hardware procurement, single lot |
+| **Sensor adapter layer** | Pluggable interface so real feeds replace the simulator behind the same API contract | Sensor pilot data format |
+| **Admin web interface** | Zone and user management without direct API calls | — |
+| **Responsive mobile web / PWA** | Optimised for smartphone browsers; installable | — |
+| **Browser push notifications** | Web Push for background alerts | — |
+| **Violation history per vehicle** | Repeat-offender tracking | — |
+| **Configurable thresholds** | Overstay duration and capacity alerts, admin-editable | Admin UI |
+| **Full WCAG 2.1 AA compliance** | Keyboard navigation, contrast audit, screen reader support | — |
+| **Production hardening** | Rate limiting, security headers, HTTPS enforcement, monitoring | — |
+| **Deployment to KSU infrastructure** | On-premise or university cloud | Institutional IT |
 
----
-
-## V2 — Native Mobile + Real IoT + ANPR
-
-**Goal:** Full production deployment with real hardware integration and native mobile apps.
-
-| Feature | Description |
-|---|---|
-| Native iOS app | React Native or Flutter; map, reservation, notifications |
-| Native Android app | React Native or Flutter |
-| Real IoT sensor integration | Replace simulator with live sensor feeds (LoRaWAN / REST / MQTT) |
-| Real ANPR / OCR | Camera-based licence plate recognition (OpenALPR or cloud API) |
-| Payment gateway | Optional: fine payment or reservation premium pricing |
-| KSU student system integration | Verify student registration; auto-link vehicle plate from student ID |
-| Multi-campus support | Extend to other KSU campuses or Saudi university network |
-| Advanced analytics | Predictive occupancy modelling; capacity planning recommendations |
-| Offline mode (mobile) | Cached zone data when connectivity is poor |
+> **Sequencing note:** Baseline measurement is listed first deliberately. Without it, no V1 outcome can be evaluated — the system would be deployed with no way to demonstrate whether it improved anything.
 
 ---
 
-## Feature Versioning Table
+## V2 — Full Production
+
+**Goal:** Production deployment with hardware integration and native applications.
+
+| Item | Description | Depends on |
+|---|---|---|
+| Native iOS and Android apps | React Native or Flutter, consuming the same API | — |
+| Campus-wide IoT sensor deployment | Live feeds via LoRaWAN, REST, or MQTT | V1 pilot results, procurement |
+| Real ANPR / OCR | Camera-based plate recognition | Camera procurement or cloud OCR contract |
+| KSU identity integration | SSO; auto-link vehicle to student record | Institutional IT cooperation |
+| Payment gateway | Optional — fines or premium reservation | Policy decision on paid parking |
+| Multi-campus support | Extend beyond KSU | — |
+| Predictive occupancy | Forecast availability from historical snapshots | Sufficient real occupancy history |
+| Offline mode | Cached zone data for poor connectivity | Native app |
+
+---
+
+## Feature Versioning
 
 | Feature | MVP | V1 | V2 |
 |---|---|---|---|
-| Map + availability | ✅ Simulated | ✅ Real option | ✅ Real |
-| Reservation | ✅ | ✅ Enhanced | ✅ + Payment |
-| Violations | ✅ Manual + simulated auto | ✅ + History | ✅ + ANPR |
-| Notifications | ✅ In-app + email | ✅ + Push | ✅ |
-| Analytics | ✅ Basic charts | ✅ + Heatmaps | ✅ + Predictive |
-| Arabic UI | ❌ | ✅ | ✅ |
-| Mobile app | ❌ (responsive web) | ❌ (PWA) | ✅ Native |
-| Real sensors | ❌ (simulated) | 🔌 Optional | ✅ |
-| ANPR | ❌ (simulated) | 🔌 Simulated enhanced | ✅ Real |
-| Payments | ❌ | ❌ | ✅ Optional |
+| Map + availability | ✅ Simulated | ✅ Sensor pilot | ✅ Real, campus-wide |
+| Zone geometry | ⚠️ Approximate | ✅ Surveyed | ✅ Surveyed |
+| Reservation | ✅ | ✅ Enhanced | ✅ + optional payment |
+| Violations | ✅ Manual + simulated auto | ✅ + history | ✅ + real ANPR |
+| Notifications | ✅ In-app + email | ✅ + browser push | ✅ + native push |
+| Analytics | ✅ Basic charts | ✅ + heatmaps | ✅ + predictive |
+| Admin management | ⚠️ API only | ✅ Web UI | ✅ |
+| Arabic / RTL | ❌ | ✅ | ✅ |
+| Mobile | ❌ Responsive web | ⚠️ PWA | ✅ Native |
+| Real sensors | ❌ | 🔌 Pilot | ✅ Deployed |
+| Baseline metrics | ❌ | ✅ Measured | ✅ Tracked |
 
 ---
 
 ## Assumptions & Dependencies
 
-- V1 Arabic localisation requires UI string extraction and RTL CSS audit
-- V1 real sensor adapter depends on KSU providing a sensor API or data feed
-- V2 ANPR depends on procurement of compatible cameras or cloud OCR contract
-- V2 KSU integration depends on institutional IT cooperation
-- All versions maintain backward-compatible `/api/v1/` REST endpoints
+- **Surveyed boundaries** require KSU facilities management to share lot geometry. Without it, V1 zones remain approximate.
+- **The sensor pilot** requires hardware budget and a nominated lot. Scope is deliberately one lot — enough to validate the adapter, small enough to abandon cheaply.
+- **Arabic localisation** requires a full string extraction pass and an RTL layout audit; it is not a translation task alone.
+- **KSU system integration** in V2 depends on institutional IT granting API access, which is outside the product team's control and should not be a critical path dependency.
+- **All versions maintain backward-compatible `/api/v1/` endpoints**, so a future mobile client requires no backend rework.
+
+---
+
+## Deferred Indefinitely
+
+Items considered and consciously excluded rather than scheduled:
+
+| Item | Reason |
+|---|---|
+| Gate and barrier control | Enforcement by hardware changes the product from informational to restrictive — a policy decision, not a product one |
+| Reservation fees | KSU parking is free; introducing a charge is a university policy question |
+| Real-time CCTV feeds | Surveillance infrastructure with privacy implications well beyond parking management |
+| Multi-university network | Attractive but premature; single-campus value must be proven first |
